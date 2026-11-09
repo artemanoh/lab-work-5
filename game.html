@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Злови кульку</title>
+  <style>
+    body {
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      font: 18px system-ui, sans-serif;
+      color: #183a36;
+    }
+
+    #field {
+      position: relative;
+      height: 40vh;
+      min-height: 160px;
+      background: #183a36;
+      border-radius: 12px;
+    }
+
+    #target {
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: #ffbd59;
+      cursor: pointer;
+    }
+
+    #start {
+      margin-top: 16px;
+      padding: 8px 16px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .switch-page {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: #183a36;
+  color: white;
+  text-decoration: none;
+}
+  </style>
+</head>
+<body>
+<a class="switch-page" href="index.html">До анімації</a>
+  <h1>Злови кульку</h1>
+  <p>Натискай на кульку. Кожне влучання приносить один бал.</p>
+  <p>Бали: <strong id="score">0</strong> · Час: <strong id="time">30</strong> с</p>
+
+  <div id="field">
+    <button id="target" aria-label="Зловити кульку" hidden></button>
+  </div>
+
+  <button id="start">Почати гру</button>
+  <p id="result" role="status"></p>
+
+  <script>
+    // const зберігає сталі посилання на HTML-елементи.
+    // getElementById шукає елемент за текстовим id у лапках.
+    const field = document.getElementById("field");
+    const target = document.getElementById("target");
+    const startButton = document.getElementById("start");
+    const scoreText = document.getElementById("score");
+    const timeText = document.getElementById("time");
+    const result = document.getElementById("result");
+    const roundSeconds = 30;
+
+    // let дозволяє змінювати значення. null означає відсутність таймера.
+    let score = 0;
+    let endTime = 0;
+    let timerId = null;
+
+    // function оголошує функцію. У фігурних дужках записані її дії.
+    function moveTarget() {
+      // Віднімаємо розмір кульки, щоб вона помістилася в межах поля.
+      const maxX = field.clientWidth - target.offsetWidth;
+      const maxY = field.clientHeight - target.offsetHeight;
+
+      // Math.random() дає випадкове число від 0 до 1, не включаючи 1.
+      // * масштабує координату, а + приєднує текст "px" для CSS.
+      target.style.left = Math.random() * maxX + "px";
+      target.style.top = Math.random() * maxY + "px";
+    }
+
+    function finishGame() {
+      clearInterval(timerId); // Скасовує періодичні виклики за номером таймера.
+      timerId = null;
+      target.hidden = true; // true вмикає властивість, false вимикає.
+      startButton.disabled = false;
+      startButton.textContent = "Зіграти ще раз";
+      timeText.textContent = 0;
+      result.textContent = "Час вичерпано! Твій результат — " + score;
+    }
+
+    function updateTime() {
+      // performance.now() повертає час у мілісекундах.
+      const remaining = endTime - performance.now();
+
+      // if перевіряє умову, <= означає «менше або дорівнює».
+      if (remaining <= 0) {
+        finishGame();
+        return; // Завершує поточний виклик функції.
+      }
+
+      // / 1000 переводить час у секунди, Math.ceil округлює вгору.
+      timeText.textContent = Math.ceil(remaining / 1000);
+    }
+
+    function startGame() {
+      score = 0; // = присвоює значення.
+      scoreText.textContent = score; // textContent змінює текст елемента.
+      timeText.textContent = roundSeconds;
+      result.textContent = "";
+      startButton.disabled = true;
+      target.hidden = false;
+      moveTarget(); // Дужки викликають функцію одразу.
+
+      endTime = performance.now() + roundSeconds * 1000;
+      // setInterval викликає updateTime приблизно кожні 100 мс.
+      // Ім'я без дужок передає саму функцію як аргумент.
+      timerId = setInterval(updateTime, 100);
+    }
+
+    function catchTarget() {
+      // === перевіряє строгу рівність. Поза раундом бали не нараховуються.
+      if (timerId === null) {
+        return;
+      }
+
+      // >= враховує і момент закінчення раунду, і час після нього.
+      if (performance.now() >= endTime) {
+        finishGame();
+        return;
+      }
+
+      score += 1; // Те саме, що score = score + 1.
+      scoreText.textContent = score;
+      moveTarget();
+    }
+
+    // addEventListener прив'язує обробник до натискання кнопки.
+    startButton.addEventListener("click", startGame);
+    target.addEventListener("click", catchTarget);
+  </script>
+</body>
+</html>
